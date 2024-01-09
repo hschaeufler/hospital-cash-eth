@@ -1,9 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const [owner] = await ethers.getSigners();
-
-  const HospitalCash = await ethers.deployContract("HospitalCash", [owner.address]);
+  const HospitalCash = await ethers.deployContract("HospitalCash");
 
   await HospitalCash.waitForDeployment();
 
