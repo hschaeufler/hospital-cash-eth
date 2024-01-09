@@ -6,9 +6,18 @@ pragma solidity ^0.8.9;
 
 contract HealthContract {
 
-    function getHospitalCashPremium(uint age, uint hospitalCashInWei) public pure returns (uint premiumInWei) {
+    function getHospitalCashPremium(uint birthDate, uint insuranceStartDate, uint hospitalCashInWei) public view returns (uint premiumInWei) {
         require(hospitalCashInWei > 1000, "Hospitalcash must be greater then 1000 Wei");
+        uint age = calculateAgeAtInsuranceStart(birthDate, insuranceStartDate);
+        require(age > 18, "Person must be an adult!");
         premiumInWei = getHospitalCashFactorFromAge(age) * hospitalCashInWei / 1000;
+    }
+
+    function calculateAgeAtInsuranceStart(uint birthDate, uint insuranceStartDate) public view returns (uint age) {
+        require(birthDate < block.timestamp, "Birtday is not allowed to be in the future.");
+        require(block.timestamp < insuranceStartDate, "Insurance start date need to bee in the future!");
+        require(birthDate < insuranceStartDate, "Birthday must be before Insurance day");
+        age = (insuranceStartDate - birthDate) / 365 days;
     }
 
     function getHospitalCashFactorFromAge(uint age) internal pure returns (uint) {
