@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 
-contract HealthContract is Ownable {
+contract HospitalCash is Ownable {
+    constructor() Ownable(msg.sender) {}
 
     function getHospitalCashPremium(uint birthDate, uint insuranceStartDate, uint hospitalCashInWei) public view returns (uint premiumInWei) {
         require(hospitalCashInWei > 1000, "Hospitalcash must be greater then 1000 Wei");
