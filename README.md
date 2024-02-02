@@ -1,6 +1,6 @@
-# Sample Hardhat Project
+# Hospital Cash Smart Contract
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+This project demonstrates a basic Health Insurance Smart Contract.
 
 Try running some of the following tasks:
 
@@ -12,14 +12,14 @@ npx hardhat node
 npx hardhat run scripts/deploy.ts
 ```
 
-## Testing Local
-See: https://docs.metamask.io/wallet/how-to/get-started-building/run-devnet/
+## Run a local development network
+See: [Metamask Documentation - Run a development network](https://docs.metamask.io/wallet/how-to/get-started-building/run-devnet/)
 
 Create a new Meta Mask account on your iPhone and create a recovery phrase.
 
 Add a .env File in the main directory. Make sure you do not check them in.
 
-Füge folgenden Eintrag in .env mit deiner Phrase ein:
+Add the following entry in .env with your phrase:
 ```
 SEED_PHRASE=auto book read ...
 ```
