@@ -4,12 +4,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const MNEMONIC = process.env.SEED_PHRASE
-console.log(MNEMONIC) 
-
 const config: HardhatUserConfig = {
   solidity: "0.8.20",
   networks: {
+    localhost: {
+      url: "http://127.0.0.1:8545"
+    },
     hardhat: {
       accounts: {
         mnemonic: process.env.SEED_PHRASE

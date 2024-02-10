@@ -27,7 +27,7 @@ SEED_PHRASE=auto book read ...
 Determine your IP address e.g. via ifconfig. 
 Execute the following command with your IP address.
 ```
- npx hardhat node --hostname 192.168.0.3
+ npx hardhat node --hostname 0.0.0.0
  ```
 
 In the Meta-Mask App:
@@ -35,7 +35,10 @@ In the Meta-Mask App:
 - Add network
 - Add a network manually
 - Add a custom name
-- Enter your IP address with port as the RPC URL. e.g.: https://192.168.0.3:8545/
+- Enter your IP address with port as the RPC URL. e.g.: https://192.168.178.86:8545/
 - Enter as Chain-Id: 1337
 - Now you can add a new Wallet 
 - Now you can add a new wallet / account
+
+## Deployment
+npx hardhat run --network localhost scripts/deploy.ts

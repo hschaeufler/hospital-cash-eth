@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract HospitalCash is Ownable {
     constructor() Ownable(msg.sender) {}
 
-    function getHospitalCashPremium(uint birthDate, uint insuranceStartDate, uint hospitalCashInWei) public view returns (uint premiumInWei) {
+    function getMonthlyPremium(uint birthDate, uint insuranceStartDate, uint hospitalCashInWei) public view returns (uint premiumInWei) {
         require(hospitalCashInWei > 1000, "Hospitalcash must be greater then 1000 Wei");
         uint age = calculateAgeAtInsuranceStart(birthDate, insuranceStartDate);
         require(age > 18, "Person must be an adult!");
