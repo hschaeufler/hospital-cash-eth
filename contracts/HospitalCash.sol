@@ -17,7 +17,7 @@ contract HospitalCash is Ownable {
 
     constructor() Ownable(msg.sender) {}
 
-    function checkHealthQuestion(
+    function checkHealthQuestions(
         HealthQuestions calldata healthQuestions
     ) public pure returns (bool) {
         return
@@ -29,8 +29,8 @@ contract HospitalCash is Ownable {
     }
 
     function calculateBMI(
-       uint weightInKg, 
-       uint heightInCm
+       uint heightInCm,
+       uint weightInKg 
     ) public pure returns (uint bmi) {
         // Needs to Multiply weight with 100² 
         // because height is in cm and not in m
@@ -38,10 +38,10 @@ contract HospitalCash is Ownable {
     }
 
     function checkBMI(
-       uint weightInKg, 
-       uint heightInCm
+       uint heightInCm,
+       uint weightInKg
     ) public pure returns (uint bmi, bool isOk) {
-        bmi = calculateBMI(weightInKg, heightInCm);
+        bmi = calculateBMI(heightInCm, weightInKg);
         require(bmi < 30,"Your bmi must be lower than 30.");
         require(bmi > 17,"Your bmi must be greater than 17.");
         isOk = true;
@@ -56,6 +56,22 @@ contract HospitalCash is Ownable {
             hospitalCashInWei > 1000,
             "Hospitalcash must be greater then 1000 Wei"
         );
+        require(
+            birthDate < int(block.timestamp),
+            "Birtday is not allowed to be in the future."
+        );
+        require(
+            int(block.timestamp) < insuranceStartDate,
+            "The insurance start date may not be more than 6 months in the future."
+        );
+        require(
+            int(insuranceStartDate) < (int(block.timestamp) + 182 days),
+            "Insurance start date n"
+        );
+        require(
+            birthDate < int(insuranceStartDate),
+            "Birthday must be before Insurance day"
+        );
         uint age = calculateAgeAtInsuranceStart(birthDate, insuranceStartDate);
         require(age > 18, "Person must be an adult!");
         premiumInWei =
@@ -65,19 +81,7 @@ contract HospitalCash is Ownable {
     function calculateAgeAtInsuranceStart(
         int birthDate,
         int insuranceStartDate
-    ) public view returns (uint age) {
-        require(
-            birthDate < int(block.timestamp),
-            "Birtday is not allowed to be in the future."
-        );
-        require(
-            int(block.timestamp) < insuranceStartDate,
-            "Insurance start date need to be in the future!"
-        );
-        require(
-            birthDate < int(insuranceStartDate),
-            "Birthday must be before Insurance day"
-        );
+    ) internal pure returns (uint age) {
         age = uint((insuranceStartDate - birthDate) / 365 days);
     }
 
