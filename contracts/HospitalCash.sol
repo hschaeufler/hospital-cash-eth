@@ -28,6 +28,25 @@ contract HospitalCash is Ownable {
             healthQuestions.hasNoMedication;
     }
 
+    function calculateBMI(
+       uint weightInKg, 
+       uint heightInCm
+    ) public pure returns (uint bmi) {
+        // Needs to Multiply weight with 100² 
+        // because height is in cm and not in m
+        bmi = (weightInKg * 100 * 100) / (heightInCm * heightInCm);
+    }
+
+    function checkBMI(
+       uint weightInKg, 
+       uint heightInCm
+    ) public pure returns (uint bmi, bool isOk) {
+        bmi = calculateBMI(weightInKg, heightInCm);
+        require(bmi < 30,"Your bmi must be lower than 30.");
+        require(bmi > 17,"Your bmi must be greater than 17.");
+        isOk = true;
+    }
+
     function getMonthlyPremium(
         int birthDate,
         int insuranceStartDate,
@@ -40,8 +59,7 @@ contract HospitalCash is Ownable {
         uint age = calculateAgeAtInsuranceStart(birthDate, insuranceStartDate);
         require(age > 18, "Person must be an adult!");
         premiumInWei =
-            (getHospitalCashFactorFromAge(age) * hospitalCashInWei) /
-            1000;
+            (getHospitalCashFactorFromAge(age) * hospitalCashInWei) / 1000;
     }
 
     function calculateAgeAtInsuranceStart(
