@@ -8,18 +8,18 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract HospitalCash is Ownable {
     constructor() Ownable(msg.sender) {}
 
-    function getMonthlyPremium(uint birthDate, uint insuranceStartDate, uint hospitalCashInWei) public view returns (uint premiumInWei) {
+    function getMonthlyPremium(int birthDate, int insuranceStartDate, uint hospitalCashInWei) public view returns (uint premiumInWei) {
         require(hospitalCashInWei > 1000, "Hospitalcash must be greater then 1000 Wei");
         uint age = calculateAgeAtInsuranceStart(birthDate, insuranceStartDate);
         require(age > 18, "Person must be an adult!");
         premiumInWei = getHospitalCashFactorFromAge(age) * hospitalCashInWei / 1000;
     }
 
-    function calculateAgeAtInsuranceStart(uint birthDate, uint insuranceStartDate) public view returns (uint age) {
-        require(birthDate < block.timestamp, "Birtday is not allowed to be in the future.");
-        require(block.timestamp < insuranceStartDate, "Insurance start date need to bee in the future!");
-        require(birthDate < insuranceStartDate, "Birthday must be before Insurance day");
-        age = (insuranceStartDate - birthDate) / 365 days;
+    function calculateAgeAtInsuranceStart(int birthDate, int insuranceStartDate) public view returns (uint age) {
+        require(birthDate < int(block.timestamp), "Birtday is not allowed to be in the future.");
+        require(int(block.timestamp) < insuranceStartDate, "Insurance start date need to bee in the future!");
+        require(birthDate < int(insuranceStartDate), "Birthday must be before Insurance day");
+        age = uint((insuranceStartDate - birthDate) / 365 days);
     }
 
     function getHospitalCashFactorFromAge(uint age) internal pure returns (uint) {
