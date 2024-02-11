@@ -17,7 +17,7 @@ contract HospitalCash is Ownable {
 
     function calculateAgeAtInsuranceStart(int birthDate, int insuranceStartDate) public view returns (uint age) {
         require(birthDate < int(block.timestamp), "Birtday is not allowed to be in the future.");
-        require(int(block.timestamp) < insuranceStartDate, "Insurance start date need to bee in the future!");
+        require(int(block.timestamp) < insuranceStartDate, "Insurance start date need to be in the future!");
         require(birthDate < int(insuranceStartDate), "Birthday must be before Insurance day");
         age = uint((insuranceStartDate - birthDate) / 365 days);
     }
