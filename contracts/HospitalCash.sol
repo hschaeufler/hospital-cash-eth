@@ -156,6 +156,11 @@ contract HospitalCash is Ownable {
         return policyIdCounter++;
     }
 
+    function alreadyInsured(address policyHolderAddress) internal view returns (bool) {
+        return contracts[policyHolderAddress].policyId > 0 
+            && block.timestamp < contracts[policyHolderAddress].insuranceEndDate;
+    }
+
     function applyForInsurace(
         HealthQuestions calldata healthQuestions, 
         uint heightInCm, 
@@ -164,6 +169,7 @@ contract HospitalCash is Ownable {
         int insuranceStartDate,
         uint hospitalCashInWei
     ) external payable returns  (InsuranceContract memory) {
+        require(!alreadyInsured(msg.sender), "Policyholder is already insured");
         require(checkHealthQuestions(healthQuestions), "Policyholder must not have any health problems.");
         (,bool isOK) = checkBMI(heightInCm,weightInKg);
         require(isOK, "BMI is not suitable.");
@@ -171,6 +177,12 @@ contract HospitalCash is Ownable {
         uint monthlyPremium = getMonthlyPremium(birthDate, insuranceStartDate, hospitalCashInWei);
         uint yearlyPremium = 12 * monthlyPremium;
         require(msg.value >= yearlyPremium, "Paid amount must be at least the calculated premium.");
+
+        // send back unnecessary ether
+        uint difference = msg.value - yearlyPremium;
+        if(difference > 0) {
+            payable(msg.sender).transfer(difference);
+        }
 
         uint policyId = getNextPolicyId();
         uint insuranceEndDate = uint(insuranceStartDate) + 365 days;
@@ -183,6 +195,7 @@ contract HospitalCash is Ownable {
         });
         contracts[msg.sender] = insuranceContract;
         policyHolder[policyId] = msg.sender;
+
         return insuranceContract;
     }   
 }
