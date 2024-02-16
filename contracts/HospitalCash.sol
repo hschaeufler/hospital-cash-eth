@@ -15,7 +15,24 @@ contract HospitalCash is Ownable {
         bool hasNoMedication;
     }
 
+    struct InsuranceContract {
+        uint insuranceStartDate;
+        uint insuranceEndDate;
+        uint dailyHospitalCashImWei;
+        uint policyId;
+        int birthday;
+    }
+
+    uint internal policyIdCounter  = 0;
+    mapping (address => InsuranceContract) public contracts;
+    mapping (uint => address) public policyHolder;
+
+
     constructor() Ownable(msg.sender) {}
+
+    // Fallback Function
+    fallback() external payable {}
+    receive() external payable {}
 
     function checkHealthQuestions(
         HealthQuestions calldata healthQuestions
@@ -134,4 +151,38 @@ contract HospitalCash is Ownable {
             revert("Age should be greater than 0 and lower than 65");
         }
     }
+
+    function getNextPolicyId() internal returns (uint) {
+        return policyIdCounter++;
+    }
+
+    function applyForInsurace(
+        HealthQuestions calldata healthQuestions, 
+        uint heightInCm, 
+        uint weightInKg,
+        int birthDate,
+        int insuranceStartDate,
+        uint hospitalCashInWei
+    ) external payable returns  (InsuranceContract memory) {
+        require(checkHealthQuestions(healthQuestions), "Policyholder must not have any health problems.");
+        (,bool isOK) = checkBMI(heightInCm,weightInKg);
+        require(isOK, "BMI is not suitable.");
+
+        uint monthlyPremium = getMonthlyPremium(birthDate, insuranceStartDate, hospitalCashInWei);
+        uint yearlyPremium = 12 * monthlyPremium;
+        require(msg.value >= yearlyPremium, "Paid amount must be at least the calculated premium.");
+
+        uint policyId = getNextPolicyId();
+        uint insuranceEndDate = uint(insuranceStartDate) + 365 days;
+        InsuranceContract memory insuranceContract =  InsuranceContract({
+            insuranceStartDate: uint(insuranceStartDate),
+            insuranceEndDate: insuranceEndDate,
+            dailyHospitalCashImWei: hospitalCashInWei,
+            policyId: policyId,
+            birthday: birthDate
+        });
+        contracts[msg.sender] = insuranceContract;
+        policyHolder[policyId] = msg.sender;
+        return insuranceContract;
+    }   
 }
