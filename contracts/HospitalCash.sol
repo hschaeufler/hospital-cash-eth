@@ -91,6 +91,7 @@ contract HospitalCash is Ownable {
         );
         uint age = calculateAgeAtInsuranceStart(birthDate, insuranceStartDate);
         require(age > 18, "Person must be an adult!");
+        require(age < 65, "Person is not allowed to be older then 65");
         premiumInWei =
             (getHospitalCashFactorFromAge(age) * hospitalCashInWei) /
             1000;
@@ -161,7 +162,7 @@ contract HospitalCash is Ownable {
         address policyHolderAddress
     ) internal view returns (bool) {
         return
-            contracts[policyHolderAddress].policyId > 0 &&
+            contracts[policyHolderAddress].insuranceStartDate != 0 &&
             block.timestamp < contracts[policyHolderAddress].insuranceEndDate;
     }
 
