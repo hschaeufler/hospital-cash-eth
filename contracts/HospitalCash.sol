@@ -23,15 +23,15 @@ contract HospitalCash is Ownable {
         int birthday;
     }
 
-    uint internal policyIdCounter  = 0;
-    mapping (address => InsuranceContract) public contracts;
-    mapping (uint => address) public policyHolder;
-
+    uint internal policyIdCounter = 0;
+    mapping(address => InsuranceContract) public contracts;
+    mapping(uint => address) public policyHolder;
 
     constructor() Ownable(msg.sender) {}
 
     // Fallback Function
     fallback() external payable {}
+
     receive() external payable {}
 
     function checkHealthQuestions(
@@ -46,21 +46,21 @@ contract HospitalCash is Ownable {
     }
 
     function calculateBMI(
-       uint heightInCm,
-       uint weightInKg 
+        uint heightInCm,
+        uint weightInKg
     ) public pure returns (uint bmi) {
-        // Needs to Multiply weight with 100² 
+        // Needs to Multiply weight with 100²
         // because height is in cm and not in m
         bmi = (weightInKg * 100 * 100) / (heightInCm * heightInCm);
     }
 
     function checkBMI(
-       uint heightInCm,
-       uint weightInKg
+        uint heightInCm,
+        uint weightInKg
     ) public pure returns (uint bmi, bool isOk) {
         bmi = calculateBMI(heightInCm, weightInKg);
-        require(bmi < 30,"Your bmi must be lower than 30.");
-        require(bmi > 17,"Your bmi must be greater than 17.");
+        require(bmi < 30, "Your bmi must be lower than 30.");
+        require(bmi > 17, "Your bmi must be greater than 17.");
         isOk = true;
     }
 
@@ -92,7 +92,8 @@ contract HospitalCash is Ownable {
         uint age = calculateAgeAtInsuranceStart(birthDate, insuranceStartDate);
         require(age > 18, "Person must be an adult!");
         premiumInWei =
-            (getHospitalCashFactorFromAge(age) * hospitalCashInWei) / 1000;
+            (getHospitalCashFactorFromAge(age) * hospitalCashInWei) /
+            1000;
     }
 
     function calculateAgeAtInsuranceStart(
@@ -156,37 +157,50 @@ contract HospitalCash is Ownable {
         return policyIdCounter++;
     }
 
-    function alreadyInsured(address policyHolderAddress) internal view returns (bool) {
-        return contracts[policyHolderAddress].policyId > 0 
-            && block.timestamp < contracts[policyHolderAddress].insuranceEndDate;
+    function alreadyInsured(
+        address policyHolderAddress
+    ) internal view returns (bool) {
+        return
+            contracts[policyHolderAddress].policyId > 0 &&
+            block.timestamp < contracts[policyHolderAddress].insuranceEndDate;
     }
 
     function applyForInsurace(
-        HealthQuestions calldata healthQuestions, 
-        uint heightInCm, 
+        HealthQuestions calldata healthQuestions,
+        uint heightInCm,
         uint weightInKg,
         int birthDate,
         int insuranceStartDate,
         uint hospitalCashInWei
-    ) external payable returns  (InsuranceContract memory) {
+    ) external payable returns (InsuranceContract memory) {
         require(!alreadyInsured(msg.sender), "Policyholder is already insured");
-        require(checkHealthQuestions(healthQuestions), "Policyholder must not have any health problems.");
-        (,bool isOK) = checkBMI(heightInCm,weightInKg);
+        require(
+            checkHealthQuestions(healthQuestions),
+            "Policyholder must not have any health problems."
+        );
+        (, bool isOK) = checkBMI(heightInCm, weightInKg);
         require(isOK, "BMI is not suitable.");
 
-        uint monthlyPremium = getMonthlyPremium(birthDate, insuranceStartDate, hospitalCashInWei);
+        uint monthlyPremium = getMonthlyPremium(
+            birthDate,
+            insuranceStartDate,
+            hospitalCashInWei
+        );
         uint yearlyPremium = 12 * monthlyPremium;
-        require(msg.value >= yearlyPremium, "Paid amount must be at least the calculated premium.");
+        require(
+            msg.value >= yearlyPremium,
+            "Paid amount must be at least the calculated premium."
+        );
 
         // send back unnecessary ether
         uint difference = msg.value - yearlyPremium;
-        if(difference > 0) {
+        if (difference > 0) {
             payable(msg.sender).transfer(difference);
         }
 
         uint policyId = getNextPolicyId();
         uint insuranceEndDate = uint(insuranceStartDate) + 365 days;
-        InsuranceContract memory insuranceContract =  InsuranceContract({
+        InsuranceContract memory insuranceContract = InsuranceContract({
             insuranceStartDate: uint(insuranceStartDate),
             insuranceEndDate: insuranceEndDate,
             dailyHospitalCashImWei: hospitalCashInWei,
@@ -197,5 +211,5 @@ contract HospitalCash is Ownable {
         policyHolder[policyId] = msg.sender;
 
         return insuranceContract;
-    }   
+    }
 }
