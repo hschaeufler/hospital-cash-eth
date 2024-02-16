@@ -9,7 +9,7 @@ npx hardhat help
 npx hardhat test
 REPORT_GAS=true npx hardhat test
 npx hardhat node
-npx hardhat run scripts/deploy.ts
+npx hardhat run --network localhost scripts/deploy.ts
 ```
 
 ## Run a local development network
@@ -25,7 +25,7 @@ SEED_PHRASE=auto book read ...
 ```
 
 Determine your IP address e.g. via ifconfig. 
-Execute the following command with your IP address.
+Execute the following command.
 ```
  npx hardhat node --hostname 0.0.0.0
  ```
