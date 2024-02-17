@@ -23,6 +23,23 @@ contract HospitalCash is Ownable {
         int birthday;
     }
 
+    struct BodyMeasure {
+        uint heightInCm;
+        uint weightInKg;
+    }
+
+    struct PremiumCalculation {
+        int birthDate;
+        int insuranceStartDate;
+        uint hospitalCashInWei;
+    }
+
+    struct ContractApplication {
+        HealthQuestions healthQuestions;
+        PremiumCalculation premiumCalculation;
+        BodyMeasure bodyMeasure;
+    }
+
     uint internal policyIdCounter = 0;
     mapping(address => InsuranceContract) public contracts;
     mapping(uint => address) public policyHolder;
