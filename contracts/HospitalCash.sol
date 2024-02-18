@@ -100,7 +100,7 @@ contract HospitalCash is Ownable {
         );
         require(
             int(insuranceStartDate) < (int(block.timestamp) + 182 days),
-            "Insurance start date n"
+            "The insurance start date need to be in the future."
         );
         require(
             birthDate < int(insuranceStartDate),
@@ -184,25 +184,26 @@ contract HospitalCash is Ownable {
     }
 
     function applyForInsurace(
-        HealthQuestions calldata healthQuestions,
-        uint heightInCm,
-        uint weightInKg,
-        int birthDate,
-        int insuranceStartDate,
-        uint hospitalCashInWei
+        ContractApplication calldata application
     ) external payable returns (InsuranceContract memory) {
+        HealthQuestions calldata healthQuestions = application.healthQuestions;
+        BodyMeasure calldata bodyMeasure = application.bodyMeasure;
+        PremiumCalculation calldata premiumCalculation = application.premiumCalculation;
+
         require(!alreadyInsured(msg.sender), "Policyholder is already insured");
         require(
             checkHealthQuestions(healthQuestions),
             "Policyholder must not have any health problems."
         );
-        (, bool isOK) = checkBMI(heightInCm, weightInKg);
+        (, bool isOK) = checkBMI(
+            bodyMeasure.heightInCm,
+            bodyMeasure.weightInKg
+        );
         require(isOK, "BMI is not suitable.");
-
         uint monthlyPremium = getMonthlyPremium(
-            birthDate,
-            insuranceStartDate,
-            hospitalCashInWei
+            premiumCalculation.birthDate,
+            premiumCalculation.insuranceStartDate,
+            premiumCalculation.hospitalCashInWei
         );
         uint yearlyPremium = 12 * monthlyPremium;
         require(
@@ -217,13 +218,13 @@ contract HospitalCash is Ownable {
         }
 
         uint policyId = getNextPolicyId();
-        uint insuranceEndDate = uint(insuranceStartDate) + 365 days;
+        uint insuranceEndDate = uint(premiumCalculation.insuranceStartDate) + 365 days;
         InsuranceContract memory insuranceContract = InsuranceContract({
-            insuranceStartDate: uint(insuranceStartDate),
+            insuranceStartDate: uint(premiumCalculation.insuranceStartDate),
             insuranceEndDate: insuranceEndDate,
-            dailyHospitalCashImWei: hospitalCashInWei,
+            dailyHospitalCashImWei: premiumCalculation.hospitalCashInWei,
             policyId: policyId,
-            birthday: birthDate
+            birthday: premiumCalculation.birthDate
         });
         contracts[msg.sender] = insuranceContract;
         policyHolder[policyId] = msg.sender;
