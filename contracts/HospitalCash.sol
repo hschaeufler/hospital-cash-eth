@@ -16,10 +16,10 @@ contract HospitalCash is Ownable {
     }
 
     struct InsuranceContract {
+        uint policyId;
         uint insuranceStartDate;
         uint insuranceEndDate;
-        uint dailyHospitalCashImWei;
-        uint policyId;
+        uint dailyHospitalCashInWei;
         int birthday;
     }
 
@@ -30,7 +30,7 @@ contract HospitalCash is Ownable {
 
     struct PremiumCalculation {
         int birthDate;
-        int insuranceStartDate;
+        uint insuranceStartDate;
         uint hospitalCashInWei;
     }
 
@@ -40,16 +40,20 @@ contract HospitalCash is Ownable {
         BodyMeasure bodyMeasure;
     }
 
-    uint internal policyIdCounter = 0;
+    // first policyId is 1
+    uint internal policyIdCounter = 1;
     mapping(address => InsuranceContract) public contracts;
     mapping(uint => address) public policyHolder;
 
+    event NewContract(
+        address policyHolder,
+        uint policyId,
+        uint insuranceStartDate,
+        uint insuranceEndDate,
+        uint dailyHospitalCashInWei
+    );
+
     constructor() Ownable(msg.sender) {}
-
-    // Fallback Function
-    fallback() external payable {}
-
-    receive() external payable {}
 
     function checkHealthQuestions(
         HealthQuestions calldata healthQuestions
@@ -83,7 +87,7 @@ contract HospitalCash is Ownable {
 
     function getMonthlyPremium(
         int birthDate,
-        int insuranceStartDate,
+        uint insuranceStartDate,
         uint hospitalCashInWei
     ) public view returns (uint premiumInWei) {
         require(
@@ -95,11 +99,11 @@ contract HospitalCash is Ownable {
             "Birtday is not allowed to be in the future."
         );
         require(
-            int(block.timestamp) < insuranceStartDate,
+            block.timestamp < insuranceStartDate,
             "The insurance start date may not be more than 6 months in the future."
         );
         require(
-            int(insuranceStartDate) < (int(block.timestamp) + 182 days),
+            insuranceStartDate < (block.timestamp + 182 days),
             "The insurance start date need to be in the future."
         );
         require(
@@ -116,9 +120,9 @@ contract HospitalCash is Ownable {
 
     function calculateAgeAtInsuranceStart(
         int birthDate,
-        int insuranceStartDate
+        uint insuranceStartDate
     ) internal pure returns (uint age) {
-        age = uint((insuranceStartDate - birthDate) / 365 days);
+        age = uint((int(insuranceStartDate) - birthDate) / 365 days);
     }
 
     function getHospitalCashFactorFromAge(
@@ -179,16 +183,17 @@ contract HospitalCash is Ownable {
         address policyHolderAddress
     ) internal view returns (bool) {
         return
-            contracts[policyHolderAddress].insuranceStartDate != 0 &&
+            contracts[policyHolderAddress].policyId != 0 &&
             block.timestamp < contracts[policyHolderAddress].insuranceEndDate;
     }
 
     function applyForInsurace(
         ContractApplication calldata application
-    ) external payable returns (InsuranceContract memory) {
+    ) external payable {
         HealthQuestions calldata healthQuestions = application.healthQuestions;
         BodyMeasure calldata bodyMeasure = application.bodyMeasure;
-        PremiumCalculation calldata premiumCalculation = application.premiumCalculation;
+        PremiumCalculation calldata premiumCalculation = application
+            .premiumCalculation;
 
         require(!alreadyInsured(msg.sender), "Policyholder is already insured");
         require(
@@ -218,17 +223,33 @@ contract HospitalCash is Ownable {
         }
 
         uint policyId = getNextPolicyId();
-        uint insuranceEndDate = uint(premiumCalculation.insuranceStartDate) + 365 days;
+        uint insuranceEndDate = uint(premiumCalculation.insuranceStartDate) +
+            365 days;
         InsuranceContract memory insuranceContract = InsuranceContract({
             insuranceStartDate: uint(premiumCalculation.insuranceStartDate),
             insuranceEndDate: insuranceEndDate,
-            dailyHospitalCashImWei: premiumCalculation.hospitalCashInWei,
+            dailyHospitalCashInWei: premiumCalculation.hospitalCashInWei,
             policyId: policyId,
             birthday: premiumCalculation.birthDate
         });
         contracts[msg.sender] = insuranceContract;
         policyHolder[policyId] = msg.sender;
 
-        return insuranceContract;
+        emit NewContract(
+            msg.sender,
+            insuranceContract.policyId,
+            insuranceContract.insuranceStartDate,
+            insuranceContract.insuranceEndDate,
+            insuranceContract.dailyHospitalCashInWei
+        );
+    }
+
+    function getContract()
+        external
+        view
+        returns (bool isValid, InsuranceContract memory insuranceContract)
+    {
+        isValid = alreadyInsured(msg.sender);
+        insuranceContract = contracts[msg.sender];
     }
 }
