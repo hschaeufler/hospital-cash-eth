@@ -46,7 +46,7 @@ contract HospitalCash is Ownable {
     mapping(uint => address) public policyHolder;
 
     event NewContract(
-        address policyHolder,
+        address indexed policyHolder,
         uint policyId,
         uint insuranceStartDate,
         uint insuranceEndDate,

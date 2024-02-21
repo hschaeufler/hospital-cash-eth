@@ -24,7 +24,6 @@ Add the following entry in .env with your phrase:
 SEED_PHRASE=auto book read ...
 ```
 
-Determine your IP address e.g. via ifconfig. 
 Execute the following command.
 ```
  npx hardhat node --hostname 0.0.0.0
