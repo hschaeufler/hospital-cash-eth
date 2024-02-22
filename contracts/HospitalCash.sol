@@ -258,6 +258,15 @@ contract HospitalCash is Ownable {
         return hasValidContract(msg.sender);
     }
 
+    function getContract()
+        external
+        view
+        returns (bool isValid, InsuranceContract memory insuranceContract)
+    {
+        isValid = hasContract(msg.sender);
+        insuranceContract = contracts[msg.sender];
+    }
+
     function getValidContract()
         external
         view
