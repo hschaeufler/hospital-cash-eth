@@ -100,11 +100,11 @@ contract HospitalCash is Ownable {
         );
         require(
             block.timestamp < insuranceStartDate,
-            "The insurance start date may not be more than 6 months in the future."
+            "The insurance start date need to be in the future."
         );
         require(
             insuranceStartDate < (block.timestamp + 182 days),
-            "The insurance start date need to be in the future."
+            "The insurance start date may not be more than 6 months in the future."
         );
         require(
             birthDate < int(insuranceStartDate),
@@ -133,21 +133,21 @@ contract HospitalCash is Ownable {
         } else if (age <= 20) {
             return 70;
         } else if (age <= 25) {
-            return (age - 21) * 6 + 184;
+            return ((age - 21) * 6) + 184;
         } else if (age <= 28) {
-            return (age - 26) * 6 + 216;
+            return ((age - 26) * 6) + 216;
         } else if (age == 29) {
             return 236;
         } else if (age <= 37) {
-            return (age - 30) * 8 + 242;
+            return ((age - 30) * 8) + 242;
         } else if (age <= 42) {
-            return (age - 38) * 10 + 360;
+            return ((age - 38) * 10) + 308;
+        } else if (age <= 46) {
+            return ((age - 43) * 12) + 360;
         } else if (age == 47) {
             return 410;
         } else if (age <= 50) {
-            return (age - 48) * 14 + 422;
-        } else if (age <= 50) {
-            return (age - 48) * 14 + 422;
+            return ((age - 48) * 14) + 422;
         } else if (age == 51) {
             return 466;
         } else if (age == 52) {
@@ -165,7 +165,7 @@ contract HospitalCash is Ownable {
         } else if (age == 58) {
             return 578;
         } else if (age <= 62) {
-            return (age - 59) * 18 + 594;
+            return ((age - 59) * 18) + 594;
         } else if (age == 63) {
             return 668;
         } else if (age == 64) {
@@ -242,6 +242,10 @@ contract HospitalCash is Ownable {
             insuranceContract.insuranceEndDate,
             insuranceContract.dailyHospitalCashInWei
         );
+    }
+
+    function hasValidContract() external view returns (bool) {
+        return alreadyInsured(msg.sender);
     }
 
     function getContract()
