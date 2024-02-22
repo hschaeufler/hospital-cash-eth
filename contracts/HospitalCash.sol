@@ -179,7 +179,13 @@ contract HospitalCash is Ownable {
         return policyIdCounter++;
     }
 
-    function alreadyInsured(
+    function hasContract(
+        address policyHolderAddress
+    ) internal view returns (bool) {
+        return contracts[policyHolderAddress].policyId != 0;
+    }
+
+    function hasValidContract(
         address policyHolderAddress
     ) internal view returns (bool) {
         return
@@ -195,7 +201,7 @@ contract HospitalCash is Ownable {
         PremiumCalculation calldata premiumCalculation = application
             .premiumCalculation;
 
-        require(!alreadyInsured(msg.sender), "Policyholder is already insured");
+        require(!hasValidContract(msg.sender), "Policyholder is already insured");
         require(
             checkHealthQuestions(healthQuestions),
             "Policyholder must not have any health problems."
@@ -244,16 +250,20 @@ contract HospitalCash is Ownable {
         );
     }
 
-    function hasValidContract() external view returns (bool) {
-        return alreadyInsured(msg.sender);
+    function hasContract() external view returns (bool) {
+        return hasContract(msg.sender);
     }
 
-    function getContract()
+    function hasValidContract() external view returns (bool) {
+        return hasValidContract(msg.sender);
+    }
+
+    function getValidContract()
         external
         view
         returns (bool isValid, InsuranceContract memory insuranceContract)
     {
-        isValid = alreadyInsured(msg.sender);
+        isValid = hasValidContract(msg.sender);
         insuranceContract = contracts[msg.sender];
     }
 }
