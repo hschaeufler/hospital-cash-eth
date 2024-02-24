@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 // Uncomment this line to use console.log
-// import "hardhat/console.sol";
+ import "hardhat/console.sol";
 
 contract HospitalCash is Ownable {
     struct HealthQuestions {
@@ -242,6 +242,8 @@ contract HospitalCash is Ownable {
             premiumCalculation.hospitalCashInWei
         );
         uint yearlyPremium = 12 * monthlyPremium;
+        console.log(yearlyPremium);
+        console.log(msg.value);
         require(
             msg.value >= yearlyPremium,
             "Paid amount must be at least the calculated premium."
@@ -305,10 +307,11 @@ contract HospitalCash is Ownable {
 
     function getLastPayOutDate() external view returns (uint) {
         require(hasValidContract(msg.sender),"Caller has no valid contract");
-        return contracts[msg.sender].lastPayOutDate
+        return contracts[msg.sender].lastPayOutDate;
     }
 
     function claimDiscount(StepDateCount[] calldata discountClaims) external {
+        require(discountClaims.length > 0, "Nothing to claim!");
         require(discountClaims.length <= 7, "No more then seven claims");
         require(hasValidContract(msg.sender), "Sender is is not insured");
         InsuranceContract memory insuranceContract = contracts[msg.sender];
