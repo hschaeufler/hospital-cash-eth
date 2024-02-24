@@ -20,6 +20,8 @@ contract HospitalCash is Ownable {
         uint insuranceStartDate;
         uint insuranceEndDate;
         uint dailyHospitalCashInWei;
+        uint paidPremiumInWei;
+        uint lastPayOutDate;
         int birthday;
     }
 
@@ -40,10 +42,23 @@ contract HospitalCash is Ownable {
         BodyMeasure bodyMeasure;
     }
 
+    struct StepDateCount {
+        uint date;
+        uint steps;
+    }
+
+    struct InsuranceClaim {
+        uint policyId;
+        uint admissionDate;
+        uint releaseDate;
+    }
+
     // first policyId is 1
     uint internal policyIdCounter = 1;
     mapping(address => InsuranceContract) public contracts;
     mapping(uint => address) public policyHolder;
+    uint public constant dailyStepLimit = 8000;
+    uint public constant discountFraction = 10;
 
     event NewContract(
         address indexed policyHolder,
@@ -51,6 +66,13 @@ contract HospitalCash is Ownable {
         uint insuranceStartDate,
         uint insuranceEndDate,
         uint dailyHospitalCashInWei
+    );
+
+    event NewPayout(
+        uint policyId,
+        uint admissionDate,
+        uint releaseDate,
+        uint payoutAmount
     );
 
     constructor() Ownable(msg.sender) {}
@@ -201,7 +223,10 @@ contract HospitalCash is Ownable {
         PremiumCalculation calldata premiumCalculation = application
             .premiumCalculation;
 
-        require(!hasValidContract(msg.sender), "Policyholder is already insured");
+        require(
+            !hasValidContract(msg.sender),
+            "Policyholder is already insured"
+        );
         require(
             checkHealthQuestions(healthQuestions),
             "Policyholder must not have any health problems."
@@ -229,13 +254,15 @@ contract HospitalCash is Ownable {
         }
 
         uint policyId = getNextPolicyId();
-        uint insuranceEndDate = uint(premiumCalculation.insuranceStartDate) +
+        uint insuranceEndDate = premiumCalculation.insuranceStartDate +
             365 days;
         InsuranceContract memory insuranceContract = InsuranceContract({
-            insuranceStartDate: uint(premiumCalculation.insuranceStartDate),
+            insuranceStartDate: premiumCalculation.insuranceStartDate,
             insuranceEndDate: insuranceEndDate,
             dailyHospitalCashInWei: premiumCalculation.hospitalCashInWei,
             policyId: policyId,
+            paidPremiumInWei: yearlyPremium,
+            lastPayOutDate: premiumCalculation.insuranceStartDate,
             birthday: premiumCalculation.birthDate
         });
         contracts[msg.sender] = insuranceContract;
@@ -274,5 +301,86 @@ contract HospitalCash is Ownable {
     {
         isValid = hasValidContract(msg.sender);
         insuranceContract = contracts[msg.sender];
+    }
+
+    function claimDiscount(StepDateCount[] calldata discountClaims) external {
+        require(discountClaims.length <= 7, "No more then seven claims");
+        require(hasValidContract(msg.sender), "Sender is is not insured");
+        InsuranceContract memory insuranceContract = contracts[msg.sender];
+        require(
+            insuranceContract.insuranceStartDate < block.timestamp,
+            "Insurance period has not yet begun"
+        );
+
+        uint lastPayOutDate = insuranceContract.lastPayOutDate;
+
+        uint validClaims = 0;
+        for (uint i = 0; i < discountClaims.length; i++) {
+            StepDateCount memory discountClaim = discountClaims[i];
+            require(
+                discountClaim.date < block.timestamp,
+                "No claims from the future allowed."
+            );
+            bool isValid = discountClaim.date <
+                insuranceContract.insuranceEndDate &&
+                discountClaim.date > insuranceContract.insuranceStartDate &&
+                discountClaim.date > (lastPayOutDate + 23 hours + 59 minutes) &&
+                discountClaim.steps >= dailyStepLimit;
+
+            if (isValid) {
+                validClaims++;
+                lastPayOutDate = discountClaim.date;
+            }
+        }
+        uint dailyDiscount = (insuranceContract.paidPremiumInWei /
+            discountFraction) / 365;
+        uint payoutAmount = dailyDiscount * validClaims;
+
+        contracts[msg.sender].lastPayOutDate = lastPayOutDate;
+        payable(msg.sender).transfer(payoutAmount);
+    }
+
+    function processClaim(InsuranceClaim calldata claim) external onlyOwner {
+        require(
+            claim.admissionDate < claim.releaseDate,
+            "Releasedate is before Admissiondate"
+        );
+        require(
+            claim.releaseDate < block.timestamp,
+            "No ongoing hospitalisation."
+        );
+        address policyHolderAdress = policyHolder[claim.policyId];
+        InsuranceContract memory insuranceContract = contracts[
+            policyHolderAdress
+        ];
+        require(
+            insuranceContract.policyId != 0,
+            "There is no insured person with the given policyId"
+        );
+        require(
+            claim.admissionDate > insuranceContract.insuranceStartDate,
+            "No claims before insurance start date"
+        );
+        require(
+            claim.admissionDate < insuranceContract.insuranceEndDate,
+            "No claims after insurance ends"
+        );
+
+        uint claimEndDate = claim.releaseDate >
+            insuranceContract.insuranceEndDate
+            ? insuranceContract.insuranceEndDate
+            : claim.releaseDate;
+        uint durationOfStay = claimEndDate - claim.admissionDate;
+        uint daysOfStay = durationOfStay / 1 days;
+        uint payoutAmount = daysOfStay *
+            insuranceContract.dailyHospitalCashInWei;
+
+        emit NewPayout(
+            claim.policyId,
+            claim.admissionDate,
+            claimEndDate,
+            payoutAmount
+        );
+        payable(msg.sender).transfer(payoutAmount);
     }
 }
