@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 // Uncomment this line to use console.log
- import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract HospitalCash is Ownable {
     struct HealthQuestions {
@@ -242,8 +242,6 @@ contract HospitalCash is Ownable {
             premiumCalculation.hospitalCashInWei
         );
         uint yearlyPremium = 12 * monthlyPremium;
-        console.log(yearlyPremium);
-        console.log(msg.value);
         require(
             msg.value >= yearlyPremium,
             "Paid amount must be at least the calculated premium."
