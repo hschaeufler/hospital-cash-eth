@@ -303,6 +303,11 @@ contract HospitalCash is Ownable {
         insuranceContract = contracts[msg.sender];
     }
 
+    function getLastPayOutDate() external view returns (uint) {
+        require(hasValidContract(msg.sender),"Caller has no valid contract");
+        return contracts[msg.sender].lastPayOutDate
+    }
+
     function claimDiscount(StepDateCount[] calldata discountClaims) external {
         require(discountClaims.length <= 7, "No more then seven claims");
         require(hasValidContract(msg.sender), "Sender is is not insured");
